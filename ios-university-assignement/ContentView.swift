@@ -24,6 +24,12 @@ struct ContentView: View {
     // another timer to change the button colour every 2 seconds
     let colorTimer = Timer.publish(every: 2, on: .main, in: .common).autoconnect()
 
+    // challenge 2 - shrinking button. it gets smaller as time runs out
+    var buttonSize: CGFloat {
+        // when timeLeft is 10 size is 200, when it is 0 size is 80
+        return 80 + (CGFloat(timeLeft) * 12)
+    }
+
     var body: some View {
         ZStack {
             Color.black.ignoresSafeArea()
@@ -80,7 +86,7 @@ struct ContentView: View {
                     .font(.system(size: 40))
                     .bold()
                     .foregroundColor(.white)
-                    .frame(width: 200, height: 200)
+                    .frame(width: buttonSize, height: buttonSize)
                     .background(buttonColor)
                     .clipShape(Circle())
                 }
