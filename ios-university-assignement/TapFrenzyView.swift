@@ -13,7 +13,9 @@ struct TapFrenzyView: View {
     @State private var score = 0
     @State private var timeLeft = 10
     @State private var gameOver = false
-    @State private var bestScore = 0
+
+    // high score that is saved even after closing the app
+    @AppStorage("tapFrenzyBest") private var bestScore = 0
 
     // challenge 1 - trap colour. green is good, grey is bad
     @State private var buttonColor = Color.green
