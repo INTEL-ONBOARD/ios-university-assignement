@@ -38,15 +38,6 @@ enum Level {
         }
     }
 
-    // how many cards light up at once
-    var litCount: Int {
-        if self == .l4 {
-            return 2
-        } else {
-            return 1
-        }
-    }
-
     // number of columns in the grid
     var columns: Int {
         switch self {
@@ -75,6 +66,9 @@ struct LightItUpView: View {
     @State private var timeLeft = 60
     @State private var gameOver = false
     @State private var currentLevel: Level = .l1
+
+    // true while we are on this screen (keeps the light loop going)
+    @State private var viewActive = false
 
     // high score that is saved even after closing the app
     @AppStorage("lightItUpBest") private var bestScore = 0
@@ -159,11 +153,16 @@ struct LightItUpView: View {
             }
         }
         .onAppear {
-            startGame()
+            // start one light loop the first time the screen shows
+            if !viewActive {
+                viewActive = true
+                startGame()
+                runLightLoop()
+            }
         }
         .onDisappear {
             // stop the light loop when we leave this screen
-            gameOver = true
+            viewActive = false
         }
     }
 
@@ -174,7 +173,6 @@ struct LightItUpView: View {
         gameOver = false
         currentLevel = .l1
         makeCards()
-        runLightLoop()
     }
 
     // work out which level we should be on by how much time has passed
@@ -208,26 +206,29 @@ struct LightItUpView: View {
         lightRandomCards()
     }
 
-    // turn all cards off then light up the right number of random ones
+    // turn all cards off then light up one random card
     func lightRandomCards() {
+        if cards.isEmpty {
+            return
+        }
         for i in cards.indices {
             cards[i].isLit = false
         }
-        let howMany = min(currentLevel.litCount, cards.count)
-        let mixed = cards.indices.shuffled()
-        for j in 0..<howMany {
-            cards[mixed[j]].isLit = true
-        }
+        let r = Int.random(in: 0..<cards.count)
+        cards[r].isLit = true
     }
 
     // keep lighting new cards every litWindow seconds
     func runLightLoop() {
-        if gameOver {
-            return
+        // only light a new card while the game is being played
+        if !gameOver {
+            lightRandomCards()
         }
-        lightRandomCards()
-        DispatchQueue.main.asyncAfter(deadline: .now() + currentLevel.litWindow) {
-            runLightLoop()
+        // keep the loop going while we are still on this screen
+        if viewActive {
+            DispatchQueue.main.asyncAfter(deadline: .now() + currentLevel.litWindow) {
+                runLightLoop()
+            }
         }
     }
 
