@@ -15,8 +15,14 @@ struct ContentView: View {
     @State private var gameOver = false
     @State private var bestScore = 0
 
+    // challenge 1 - trap colour. green is good, grey is bad
+    @State private var buttonColor = Color.green
+
     // a timer that fires every 1 second
     let timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
+
+    // another timer to change the button colour every 2 seconds
+    let colorTimer = Timer.publish(every: 2, on: .main, in: .common).autoconnect()
 
     var body: some View {
         ZStack {
@@ -61,13 +67,21 @@ struct ContentView: View {
 
                     // the big tap button
                     Button("TAP") {
-                        score += 1
+                        // if the button is green you get a point
+                        // if it is grey you lose a point (trap)
+                        if buttonColor == .green {
+                            score += 1
+                        } else {
+                            if score > 0 {
+                                score -= 1
+                            }
+                        }
                     }
                     .font(.system(size: 40))
                     .bold()
                     .foregroundColor(.white)
                     .frame(width: 200, height: 200)
-                    .background(Color.green)
+                    .background(buttonColor)
                     .clipShape(Circle())
                 }
             }
@@ -83,6 +97,14 @@ struct ContentView: View {
                         bestScore = score
                     }
                 }
+            }
+        }
+        .onReceive(colorTimer) { _ in
+            // randomly pick green or grey
+            if Bool.random() {
+                buttonColor = .green
+            } else {
+                buttonColor = .gray
             }
         }
     }
