@@ -8,17 +8,15 @@
 import SwiftUI
 import Combine
 
-// one card in the grid
 struct Card: Identifiable {
     let id = UUID()
     var isLit = false
 }
 
-// the 4 levels of the game
+// the 4 levels - each one is harder than the last
 enum Level {
     case l1, l2, l3, l4
 
-    // how many cards on screen
     var cardCount: Int {
         switch self {
         case .l1: return 3
@@ -28,7 +26,6 @@ enum Level {
         }
     }
 
-    // how long a card stays lit (in seconds)
     var litWindow: Double {
         switch self {
         case .l1: return 1.5
@@ -38,7 +35,6 @@ enum Level {
         }
     }
 
-    // number of columns in the grid
     var columns: Int {
         switch self {
         case .l1: return 3
@@ -48,7 +44,6 @@ enum Level {
         }
     }
 
-    // a different colour for each level
     var color: Color {
         switch self {
         case .l1: return .green
@@ -66,17 +61,11 @@ struct LightItUpView: View {
     @State private var timeLeft = 60
     @State private var gameOver = false
     @State private var currentLevel: Level = .l1
-
-    // true while we are on this screen (keeps the light loop going)
     @State private var viewActive = false
-
-    // high score that is saved even after closing the app
     @AppStorage("lightItUpBest") private var bestScore = 0
 
-    // round timer that ticks every second
     let timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
 
-    // the columns change depending on the level
     var gridColumns: [GridItem] {
         Array(repeating: GridItem(.flexible()), count: currentLevel.columns)
     }
@@ -86,7 +75,6 @@ struct LightItUpView: View {
             Color.black.ignoresSafeArea()
 
             if gameOver {
-                // game over screen
                 VStack(spacing: 20) {
                     Text("Round Over")
                         .font(.largeTitle)
@@ -111,7 +99,6 @@ struct LightItUpView: View {
                     .cornerRadius(12)
                 }
             } else {
-                // playing screen
                 VStack(spacing: 20) {
                     HStack {
                         Text("Time: \(timeLeft)")
@@ -123,7 +110,6 @@ struct LightItUpView: View {
                     .font(.title2)
                     .padding(.horizontal)
 
-                    // the grid of cards
                     LazyVGrid(columns: gridColumns, spacing: 10) {
                         ForEach(cards.indices, id: \.self) { i in
                             RoundedRectangle(cornerRadius: 12)
@@ -145,7 +131,6 @@ struct LightItUpView: View {
                     changeLevelIfNeeded()
                 } else {
                     gameOver = true
-                    // save the high score if this was a new best
                     if score > bestScore {
                         bestScore = score
                     }
@@ -153,7 +138,6 @@ struct LightItUpView: View {
             }
         }
         .onAppear {
-            // start one light loop the first time the screen shows
             if !viewActive {
                 viewActive = true
                 startGame()
@@ -161,12 +145,10 @@ struct LightItUpView: View {
             }
         }
         .onDisappear {
-            // stop the light loop when we leave this screen
             viewActive = false
         }
     }
 
-    // start a fresh round at level 1
     func startGame() {
         score = 0
         timeLeft = 60
@@ -175,7 +157,7 @@ struct LightItUpView: View {
         makeCards()
     }
 
-    // work out which level we should be on by how much time has passed
+    // pick the level based on how much time has passed
     func changeLevelIfNeeded() {
         let timePassed = 60 - timeLeft
         var newLevel: Level = .l1
@@ -189,14 +171,12 @@ struct LightItUpView: View {
             newLevel = .l4
         }
 
-        // if the level changed, build a new grid
         if newLevel != currentLevel {
             currentLevel = newLevel
             makeCards()
         }
     }
 
-    // build the cards array for the current level
     func makeCards() {
         var newCards: [Card] = []
         for _ in 0..<currentLevel.cardCount {
@@ -206,7 +186,6 @@ struct LightItUpView: View {
         lightRandomCards()
     }
 
-    // turn all cards off then light up one random card
     func lightRandomCards() {
         if cards.isEmpty {
             return
@@ -218,13 +197,11 @@ struct LightItUpView: View {
         cards[r].isLit = true
     }
 
-    // keep lighting new cards every litWindow seconds
+    // light a new card, wait the level's time, then do it again
     func runLightLoop() {
-        // only light a new card while the game is being played
         if !gameOver {
             lightRandomCards()
         }
-        // keep the loop going while we are still on this screen
         if viewActive {
             DispatchQueue.main.asyncAfter(deadline: .now() + currentLevel.litWindow) {
                 runLightLoop()
@@ -232,14 +209,13 @@ struct LightItUpView: View {
         }
     }
 
-    // when a card is tapped
     func tapCard(_ i: Int) {
         if cards[i].isLit {
-            score += 1            // correct card
-            lightRandomCards()    // show a new one straight away
+            score += 1
+            lightRandomCards()
         } else {
             if score > 0 {
-                score -= 1        // wrong card penalty
+                score -= 1
             }
         }
     }

@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-// this is the main menu of the app
+// main menu with a button for each game
 struct ContentView: View {
     var body: some View {
         NavigationStack {
@@ -17,7 +17,6 @@ struct ContentView: View {
                     .font(.largeTitle)
                     .bold()
 
-                // button that goes to the first game
                 NavigationLink {
                     TapFrenzyView()
                 } label: {
@@ -30,7 +29,6 @@ struct ContentView: View {
                         .cornerRadius(15)
                 }
 
-                // button that goes to the second game
                 NavigationLink {
                     LightItUpView()
                 } label: {
