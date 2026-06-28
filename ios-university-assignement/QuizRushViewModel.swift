@@ -44,12 +44,11 @@ class QuizRushViewModel: ObservableObject {
         UserDefaults.standard.integer(forKey: bestKey)
     }
 
-    // how many questions there are, for the "3 of 10" label
     var total: Int {
         questions.count
     }
 
-    // go and load a fresh round of questions
+    // load a fresh round of questions
     func load() async {
         state = .loading
         do {
