@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import Combine
 
 // the three states the screen can be in
 enum QuizState {
