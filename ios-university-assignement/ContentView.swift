@@ -40,6 +40,18 @@ struct ContentView: View {
                         .background(Color.blue)
                         .cornerRadius(15)
                 }
+
+                NavigationLink {
+                    QuizRushView()
+                } label: {
+                    Text("Quiz Rush")
+                        .font(.title)
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(Color.orange)
+                        .cornerRadius(15)
+                }
             }
             .padding()
             .navigationTitle("Home")
