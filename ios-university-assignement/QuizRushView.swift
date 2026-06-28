@@ -10,10 +10,17 @@ import SwiftUI
 struct QuizRushView: View {
 
     @StateObject private var viewModel = QuizRushViewModel()
+    @State private var shake: CGFloat = 0
 
     var body: some View {
         ZStack {
             Color.black.ignoresSafeArea()
+
+            // flash green when the answer is right
+            Color.green
+                .opacity(viewModel.feedback == .correct ? 0.35 : 0)
+                .ignoresSafeArea()
+                .animation(.easeInOut(duration: 0.3), value: viewModel.feedback)
 
             // show a different screen depending on the state
             switch viewModel.state {
@@ -36,6 +43,17 @@ struct QuizRushView: View {
         // fetch the questions when the screen appears
         .task {
             await viewModel.load()
+        }
+        // shake the screen when the answer is wrong
+        .onChange(of: viewModel.feedback) { _, newValue in
+            if newValue == .wrong {
+                withAnimation(.easeInOut(duration: 0.1).repeatCount(3, autoreverses: true)) {
+                    shake = 12
+                }
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+                    shake = 0
+                }
+            }
         }
     }
 
@@ -104,6 +122,7 @@ struct QuizRushView: View {
             }
         }
         .padding()
+        .offset(x: shake)
     }
 
     // shown after the last question

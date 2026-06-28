@@ -14,6 +14,12 @@ enum QuizState {
     case failed
 }
 
+// used to flash the screen green or shake it red
+enum AnswerFeedback: Equatable {
+    case correct
+    case wrong
+}
+
 // all the game logic lives here, away from the view
 @MainActor
 class QuizRushViewModel: ObservableObject {
@@ -25,6 +31,7 @@ class QuizRushViewModel: ObservableObject {
     @Published var score = 0
     @Published var streak = 0
     @Published var finished = false
+    @Published var feedback: AnswerFeedback?
 
     private var questions: [TriviaQuestion] = []
     private var correctAnswer = ""
@@ -60,9 +67,13 @@ class QuizRushViewModel: ObservableObject {
 
     // check the answer the player tapped and move on
     func answer(_ choice: String) {
+        // ignore extra taps while the feedback is showing
+        guard feedback == nil else { return }
+
         if choice == correctAnswer {
             streak += 1
             score += 10 + streak   // consecutive correct answers give bonus points
+            feedback = .correct
         } else {
             streak = 0
             // small penalty but never go below zero
@@ -71,8 +82,15 @@ class QuizRushViewModel: ObservableObject {
             } else {
                 score = 0
             }
+            feedback = .wrong
         }
-        goToNext()
+
+        // hold the feedback for a moment, then go to the next question
+        Task {
+            try? await Task.sleep(nanoseconds: 500_000_000)
+            feedback = nil
+            goToNext()
+        }
     }
 
     // move to the next question or finish the round
