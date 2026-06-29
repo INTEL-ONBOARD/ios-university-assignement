@@ -56,6 +56,16 @@ struct QuizRushView: View {
                 }
             }
         }
+        // let the player check the leaderboard from inside the game
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                NavigationLink {
+                    LeaderboardView()
+                } label: {
+                    Image(systemName: "trophy")
+                }
+            }
+        }
     }
 
     // shown when the network call fails
