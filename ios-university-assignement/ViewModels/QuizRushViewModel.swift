@@ -34,14 +34,21 @@ class QuizRushViewModel: ObservableObject {
     @Published var finished = false
     @Published var feedback: AnswerFeedback?
 
+    // the top scores, best first
+    @Published var leaderboard: [ScoreEntry] = []
+    // stops the same round being saved to the board twice
+    @Published var savedRound = false
+    // the entry we just added, so the view can highlight it
+    @Published var lastEntryID: UUID?
+
     private var questions: [TriviaQuestion] = []
     private var correctAnswer = ""
 
     private let service = QuizService()
-    private let bestKey = "quizRushBest"
+    private let store = LeaderboardStore()
 
     var bestScore: Int {
-        UserDefaults.standard.integer(forKey: bestKey)
+        leaderboard.first?.score ?? 0
     }
 
     var total: Int {
@@ -58,6 +65,9 @@ class QuizRushViewModel: ObservableObject {
             score = 0
             streak = 0
             finished = false
+            savedRound = false
+            lastEntryID = nil
+            leaderboard = store.load()
             prepareQuestion()
             state = .loaded
         } catch {
@@ -100,7 +110,6 @@ class QuizRushViewModel: ObservableObject {
             prepareQuestion()
         } else {
             finished = true
-            saveBest()
         }
     }
 
@@ -117,10 +126,20 @@ class QuizRushViewModel: ObservableObject {
         answers = all.shuffled()
     }
 
-    private func saveBest() {
-        if score > bestScore {
-            UserDefaults.standard.set(score, forKey: bestKey)
+    // save the player's initials and score once the round is over
+    func saveScore(initials: String) {
+        guard !savedRound else { return }
+
+        var clean = initials.trimmingCharacters(in: .whitespaces).uppercased()
+        clean = String(clean.prefix(3))
+        if clean.isEmpty {
+            clean = "YOU"
         }
+
+        let entry = store.add(initials: clean, score: score)
+        leaderboard = store.load()
+        lastEntryID = entry.id
+        savedRound = true
     }
 
     // the API sends text like &quot; and &#039; so swap those back to real characters
