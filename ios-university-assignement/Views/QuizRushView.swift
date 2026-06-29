@@ -11,6 +11,7 @@ struct QuizRushView: View {
 
     @StateObject private var viewModel = QuizRushViewModel()
     @State private var shake: CGFloat = 0
+    @State private var initials = ""
 
     var body: some View {
         ZStack {
@@ -127,21 +128,72 @@ struct QuizRushView: View {
 
     // shown after the last question
     var resultsView: some View {
-        VStack(spacing: 20) {
-            Text("Round Over")
-                .font(.largeTitle)
+        ScrollView {
+            VStack(spacing: 20) {
+                Text("Round Over")
+                    .font(.largeTitle)
+                    .bold()
+                    .foregroundColor(.white)
+
+                Text("Score: \(viewModel.score)")
+                    .font(.title)
+                    .foregroundColor(.white)
+
+                if viewModel.savedRound {
+                    savedView
+                } else {
+                    saveScoreView
+                }
+            }
+            .padding()
+        }
+    }
+
+    // ask the player for their initials before saving the score
+    var saveScoreView: some View {
+        VStack(spacing: 16) {
+            Text("Enter your initials")
+                .foregroundColor(.gray)
+
+            TextField("ABC", text: $initials)
+                .textInputAutocapitalization(.characters)
+                .disableAutocorrection(true)
+                .multilineTextAlignment(.center)
+                .font(.title2)
+                .foregroundColor(.white)
+                .frame(width: 120)
+                .padding()
+                .background(Color.white.opacity(0.1))
+                .cornerRadius(12)
+                .onChange(of: initials) { _, newValue in
+                    // keep it to 3 letters, uppercase
+                    let letters = newValue.filter { $0.isLetter }
+                    initials = String(letters.prefix(3)).uppercased()
+                }
+
+            Button("Save Score") {
+                viewModel.saveScore(initials: initials)
+            }
+            .font(.title2)
+            .padding()
+            .background(Color.orange)
+            .foregroundColor(.white)
+            .cornerRadius(12)
+        }
+    }
+
+    // the leaderboard with the new score highlighted, shown once saved
+    var savedView: some View {
+        VStack(spacing: 16) {
+            Text("Leaderboard")
+                .font(.title2)
                 .bold()
                 .foregroundColor(.white)
 
-            Text("Score: \(viewModel.score)")
-                .font(.title)
-                .foregroundColor(.white)
-
-            Text("Best: \(viewModel.bestScore)")
-                .font(.headline)
-                .foregroundColor(.gray)
+            LeaderboardList(entries: viewModel.leaderboard, highlightID: viewModel.lastEntryID)
 
             Button("Play Again") {
+                initials = ""
                 Task {
                     await viewModel.load()
                 }
